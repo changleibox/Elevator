@@ -19,7 +19,6 @@ public class Run {
     public static void main(String[] args) {
         Elevator elevator = Assembler.assemble();
         Manager manager = new Manager(elevator);
-        manager.start();
         manager.ride(-1, Direction.UP);
         manager.ride(2, Direction.DOWN);
         manager.ride(3, Direction.UP);
@@ -30,5 +29,11 @@ public class Run {
         manager.ride(8, Direction.DOWN);
         manager.ride(9, Direction.DOWN);
         manager.ride(10, Direction.DOWN);
+        // try {
+        //     Thread.sleep(10000L);
+        // } catch (InterruptedException e) {
+        //     e.printStackTrace();
+        // }
+        // manager.ride(1, Direction.UP);
     }
 }

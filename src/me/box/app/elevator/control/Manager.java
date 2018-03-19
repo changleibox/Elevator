@@ -12,14 +12,13 @@ import me.box.app.elevator.model.Elevator;
  * <p>
  * 电梯控制器
  */
+@SuppressWarnings("unused")
 public class Manager {
 
     private final Elevator mElevator;
-    private final Thread mThread;
 
     public Manager(Elevator elevator) {
         this.mElevator = elevator;
-        this.mThread = new Thread(elevator);
     }
 
     /**
@@ -29,10 +28,11 @@ public class Manager {
         mElevator.addTargetFloor(index, direction);
     }
 
-    public void start() {
-        if (!mThread.isAlive()) {
-            this.mThread.start();
-        }
+    /**
+     * 乘坐电梯
+     */
+    public void ride(int index) {
+        mElevator.addTargetFloor(index);
     }
 
 }
