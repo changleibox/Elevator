@@ -121,9 +121,16 @@ public class Elevator implements Runnable {
             }
 
             try {
-                Thread.sleep(2000L);
+                Thread.sleep(2000L); // 电梯运行两秒钟
             } catch (InterruptedException ignored) {
             }
+        }
+    }
+
+    private void start(IntentFloor intentFloor) {
+        if (status == Status.AWAIT) {
+            status = Status.RUNING;
+            System.out.println("电梯启动，方向" + currentDirection);
         }
     }
 
@@ -137,15 +144,12 @@ public class Elevator implements Runnable {
         if (targetFloors.contains(currentFloor)) {
             System.out.println("\33[31m开门\033[0m");
             targetFloors.remove(currentFloor);
+            try {
+                Thread.sleep(1000L); // 电梯开门一秒钟
+            } catch (InterruptedException ignored) {
+            }
         }
         return nextFloor;
-    }
-
-    private void start(IntentFloor intentFloor) {
-        if (status == Status.AWAIT) {
-            status = Status.RUNING;
-            System.out.println("电梯启动，方向" + currentDirection);
-        }
     }
 
     private List<IntentFloor> handleUpDownFloors(List<IntentFloor> targetFloors) {
