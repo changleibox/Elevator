@@ -8,6 +8,8 @@ import me.box.app.elevator.enums.Direction;
 import me.box.app.elevator.enums.Status;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by box on 2018/3/16.
@@ -17,18 +19,21 @@ import java.util.*;
 @SuppressWarnings({"unused", "InfiniteLoopStatement"})
 public class Elevator implements Runnable {
 
-    private final Map<Integer, Floor> floorsMap;
-    private Direction direction;
+    private final Map<Integer, OutsideFloor> floorsMap;
+    private Direction currentDirection;
     private Status status;
-    private Floor currentFloor;
-    private final LinkedList<Floor> targetFloors;
+    private OutsideFloor currentFloor;
+    private final LinkedList<OutsideFloor> targetFloors;
+    private final LinkedList<OutsideFloor> routeFloors;
+    private boolean isAnalysisData = true;
 
-    public Elevator(List<Floor> floors) {
+    public Elevator(List<OutsideFloor> floors) {
         this.status = Status.AWAIT;
-        this.direction = Direction.UP;
+        this.currentDirection = Direction.UP;
         this.floorsMap = new LinkedHashMap<>();
         this.currentFloor = Collections.min(floors);
         this.targetFloors = new LinkedList<>();
+        this.routeFloors = new LinkedList<>();
         floors.stream().sorted().forEach(floor -> floorsMap.put(floor.getIndex(), floor));
     }
 
@@ -36,12 +41,12 @@ public class Elevator implements Runnable {
         return new ArrayList<>(floorsMap.values());
     }
 
-    public Direction getDirection() {
-        return direction;
-    }
-
     public Status getStatus() {
         return status;
+    }
+
+    public Direction getCurrentDirection() {
+        return currentDirection;
     }
 
     public Floor getCurrentFloor() {
@@ -54,7 +59,7 @@ public class Elevator implements Runnable {
      * @param index 楼层
      */
     public void addTargetFloor(int index) {
-        addTargetFloor(index, index < currentFloor.getIndex() ? Direction.DOWN : Direction.UP);
+        addTargetFloor(index, null);
     }
 
     /**
@@ -64,11 +69,27 @@ public class Elevator implements Runnable {
      * @param intentDirection 上还是下
      */
     public void addTargetFloor(int index, Direction intentDirection) {
-        synchronized (targetFloors) {
+        synchronized (routeFloors) {
+            isAnalysisData = true;
             if (index == currentFloor.getIndex()) {
                 return;
             }
-            Floor floor = floorsMap.get(index);
+            if (intentDirection == null) {
+                if (currentDirection == Direction.UP) {
+                    if (index < currentFloor.getIndex()) {
+                        intentDirection = Direction.DOWN;
+                    } else {
+                        intentDirection = Direction.UP;
+                    }
+                } else {
+                    if (index > currentFloor.getIndex()) {
+                        intentDirection = Direction.DOWN;
+                    } else {
+                        intentDirection = Direction.UP;
+                    }
+                }
+            }
+            OutsideFloor floor = floorsMap.get(index);
             if (floor == null) {
                 System.out.println(String.format("不能到达%d楼", index));
                 return;
@@ -79,17 +100,18 @@ public class Elevator implements Runnable {
             }
             this.targetFloors.add(floor);
 
-            List<Floor> upFloors = new ArrayList<>();
-            List<Floor> downFloors = new ArrayList<>();
-            for (Floor targetFloor : targetFloors) {
-                if (direction == Direction.UP) {
-                    if (targetFloor.getIntentDirection() == Direction.UP && targetFloor.compareTo(currentFloor) > 0) {
+            List<OutsideFloor> upFloors = new ArrayList<>();
+            List<OutsideFloor> downFloors = new ArrayList<>();
+            for (OutsideFloor targetFloor : targetFloors) {
+                Direction direction = targetFloor.getIntentDirection();
+                if (currentDirection == Direction.UP) {
+                    if (direction == Direction.UP && targetFloor.compareTo(currentFloor) > 0) {
                         upFloors.add(targetFloor);
                     } else {
                         downFloors.add(targetFloor);
                     }
                 } else {
-                    if (targetFloor.getIntentDirection() == Direction.DOWN && targetFloor.compareTo(currentFloor) < 0) {
+                    if (direction == Direction.DOWN && targetFloor.compareTo(currentFloor) < 0) {
                         downFloors.add(targetFloor);
                     } else {
                         upFloors.add(targetFloor);
@@ -98,59 +120,91 @@ public class Elevator implements Runnable {
             }
             upFloors.sort(Floor::compareTo);
             downFloors.sort(Comparator.reverseOrder());
-            LinkedList<Floor> floors = new LinkedList<>();
+            LinkedList<OutsideFloor> floors = new LinkedList<>();
             floors.addAll(upFloors);
             floors.addAll(downFloors);
             targetFloors.clear();
             targetFloors.addAll(floors);
 
+            routeFloors.clear();
+            int upMaxFloor = 0;
+            if (!upFloors.isEmpty()) {
+                int upMinFloor = Collections.min(upFloors).getIndex();
+                upMaxFloor = Collections.max(upFloors).getIndex();
+                routeFloors.addAll(Stream.iterate(upMinFloor, item -> item + 1)
+                        .limit(upMaxFloor - upMinFloor + 1)
+                        .map(item -> floorsMap.containsKey(item) ? floorsMap.get(item) : OutsideFloor.createFloor(item))
+                        .collect(Collectors.toList()));
+            }
+            if (!downFloors.isEmpty()) {
+                int downMinFloor = Collections.min(downFloors).getIndex();
+                int downMaxFloor = Collections.max(downFloors).getIndex();
+                downMaxFloor = Math.max(upMaxFloor, downMaxFloor);
+                if (downMaxFloor == upMaxFloor) {
+                    downMaxFloor -= 1;
+                }
+                routeFloors.addAll(Stream.iterate(downMaxFloor, item -> item - 1)
+                        .limit(downMaxFloor - downMinFloor + 1)
+                        .map(item -> floorsMap.containsKey(item) ? floorsMap.get(item) : OutsideFloor.createFloor(item))
+                        .collect(Collectors.toList()));
+            }
+
             if (status == Status.AWAIT) {
                 status = Status.RUNING;
                 if (floor.compareTo(currentFloor) < 0) {
-                    direction = Direction.DOWN;
+                    currentDirection = Direction.DOWN;
                 } else if (floor.compareTo(currentFloor) > 0) {
-                    direction = Direction.UP;
+                    currentDirection = Direction.UP;
                 } else {
-                    direction = floor.getIntentDirection();
+                    currentDirection = floor.getIntentDirection();
                 }
-                System.out.println("电梯启动，方向" + direction);
+                System.out.println("电梯启动，方向" + currentDirection);
             }
+            isAnalysisData = false;
         }
     }
 
     @Override
     public void run() {
         while (true) {
-            if (status == Status.AWAIT || targetFloors.isEmpty()) {
+            if (status == Status.AWAIT || isAnalysisData) {
                 continue;
             }
-            Floor nextFloor = targetFloors.poll();
-            StringBuilder builder = new StringBuilder("到达")
-                    .append(currentFloor)
-                    .append("，")
-                    .append("目标")
-                    .append(nextFloor);
-            System.out.println(builder);
-            if (currentFloor.compareTo(nextFloor) < 0) {
-                direction = Direction.UP;
-            } else if (currentFloor.compareTo(nextFloor) > 0) {
-                direction = Direction.DOWN;
-            }
-            System.out.println("方向" + direction);
-            currentFloor = nextFloor;
-
-            if (targetFloors.isEmpty()) {
+            if (routeFloors.isEmpty()) {
                 status = Status.AWAIT;
-                direction = currentFloor.getIntentDirection();
-                System.out.println(String.format("到达%s", currentFloor));
+                currentDirection = currentFloor.getIntentDirection();
+                handle(currentFloor);
                 System.out.println("电梯停止");
-                System.out.println("方向" + direction);
             } else {
+                handle(routeFloors.poll());
+            }
+
+            if (!routeFloors.isEmpty()) {
                 try {
                     Thread.sleep(2000L);
                 } catch (InterruptedException ignored) {
                 }
             }
         }
+    }
+
+    private void handle(OutsideFloor nextFloor) {
+        StringBuilder builder = new StringBuilder("到达")
+                .append(currentFloor)
+                .append("，")
+                .append("目标")
+                .append(nextFloor);
+        System.out.println(builder);
+        if (targetFloors.contains(currentFloor)) {
+            System.out.println("\33[31m开门\033[0m");
+            targetFloors.remove(currentFloor);
+        }
+        if (currentFloor.compareTo(nextFloor) < 0) {
+            currentDirection = Direction.UP;
+        } else if (currentFloor.compareTo(nextFloor) > 0) {
+            currentDirection = Direction.DOWN;
+        }
+        System.out.println("方向" + currentDirection);
+        currentFloor = nextFloor;
     }
 }
