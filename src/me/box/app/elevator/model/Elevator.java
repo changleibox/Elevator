@@ -26,7 +26,8 @@ public class Elevator implements Runnable {
     private IntentFloor currentFloor;
     private Status status;
 
-    private Timer mThread;
+    private final Timer mTimer = new Timer();
+    private TimerTask mTimerTask;
 
     public Elevator(List<OutsideFloor> floors) {
         this.status = Status.AWAIT;
@@ -74,10 +75,7 @@ public class Elevator implements Runnable {
             return;
         }
 
-        if (mThread != null) {
-            mThread.cancel();
-            mThread = null;
-        }
+        stopTimer();
 
         int currentIndex = currentFloor.getIndex();
         if (targetFloors.isEmpty()) {
@@ -107,14 +105,22 @@ public class Elevator implements Runnable {
 
         if (status == Status.AWAIT) {
             status = Status.RUNING;
-            System.out.println("电梯启动，方向" + currentDirection);
+            System.out.println("\033[36m电梯启动，方向" + currentDirection + "\033[0m");
         }
-        mThread = start(this);
+        System.out.println(Arrays.toString(routeFloors.toArray()));
+        mTimerTask = new TimerTask() {
+            @Override
+            public void run() {
+                Elevator.this.run();
+            }
+        };
+        mTimer.schedule(mTimerTask, 500L);
     }
 
     @Override
     public void run() {
         while (status == Status.RUNING) {
+            System.out.println(Thread.currentThread());
             if (routeFloors.isEmpty()) {
                 handle(currentFloor);
                 stop();
@@ -130,26 +136,20 @@ public class Elevator implements Runnable {
     }
 
     public void stop() {
-        if (mThread != null) {
-            mThread.cancel();
-            mThread = null;
-        }
+        stopTimer();
         status = Status.AWAIT;
         currentDirection = null;
         routeFloors.clear();
         targetFloors.clear();
-        System.out.println("电梯停止");
+        System.out.println("\33[31m电梯停止\033[0m");
     }
 
-    private Timer start(final Runnable runnable) {
-        Timer timer = new Timer(false);
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                runnable.run();
-            }
-        }, 500L);
-        return timer;
+    private void stopTimer() {
+        if (mTimerTask != null) {
+            mTimerTask.cancel();
+            mTimerTask = null;
+        }
+        mTimer.purge();
     }
 
     private IntentFloor handle(IntentFloor nextFloor) {
@@ -164,7 +164,7 @@ public class Elevator implements Runnable {
                 .append(currentDirection);
         if (targetFloors.contains(currentFloor)) {
             builder.append("\n");
-            builder.append("\33[31m开门\033[0m");
+            builder.append("\33[92m开门\033[0m");
             targetFloors.remove(currentFloor);
             System.out.println(builder);
             try {
@@ -213,7 +213,7 @@ public class Elevator implements Runnable {
         }
         Direction otherDirection = currentDirection == Direction.UP ? Direction.DOWN : Direction.UP;
         List<IntentFloor> otherFloors = floorMap.get(otherDirection);
-        if (otherFloors != null) {
+        if (otherFloors != null && indexOf != -1) {
             sortedIntentFloors.addAll(indexOf, otherFloors);
         }
         if (!contains) {
