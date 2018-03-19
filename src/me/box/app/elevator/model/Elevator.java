@@ -120,7 +120,6 @@ public class Elevator implements Runnable {
     @Override
     public void run() {
         while (status == Status.RUNING) {
-            System.out.println(Thread.currentThread());
             if (routeFloors.isEmpty()) {
                 handle(currentFloor);
                 stop();
