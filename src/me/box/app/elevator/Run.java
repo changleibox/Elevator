@@ -21,6 +21,7 @@ public class Run {
 
         Elevator elevator = Assembler.assemble();
         Manager manager = new Manager(elevator);
+        manager.ride(-1, Direction.UP);
         manager.ride(3, Direction.UP);
         manager.ride(4, Direction.UP);
         manager.ride(5, Direction.DOWN);
