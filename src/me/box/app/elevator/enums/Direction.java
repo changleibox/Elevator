@@ -15,6 +15,6 @@ public enum Direction {
 
     @Override
     public String toString() {
-        return this == UP ? "上" : "下";
+        return this == UP ? "⬆" : "⬇";
     }
 }

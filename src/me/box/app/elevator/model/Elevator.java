@@ -29,7 +29,6 @@ public class Elevator implements Runnable {
 
     public Elevator(List<OutsideFloor> floors) {
         this.status = Status.AWAIT;
-        this.currentDirection = Direction.UP;
         this.floorsMap = new LinkedHashMap<>();
         this.currentFloor = IntentFloor.createFloor(Collections.max(floors));
         this.targetFloors = new LinkedList<>();
@@ -75,6 +74,10 @@ public class Elevator implements Runnable {
             if (index == currentIndex) {
                 return;
             }
+            if (targetFloors.isEmpty()) {
+                currentDirection = index < currentIndex ? Direction.DOWN : Direction.UP;
+                currentFloor.setIntentDirection(currentDirection);
+            }
             if (intentDirection == null) {
                 if ((currentDirection == Direction.UP && index < currentIndex)
                         || (currentDirection == Direction.DOWN && index > currentIndex)) {
@@ -91,73 +94,17 @@ public class Elevator implements Runnable {
             if (targetFloors.contains(intentFloor)) {
                 return;
             }
-            this.targetFloors.add(intentFloor);
+            targetFloors.add(intentFloor);
 
-            List<IntentFloor> upFloors = new ArrayList<>();
-            List<IntentFloor> downFloors = new ArrayList<>();
-            for (IntentFloor targetFloor : targetFloors) {
-                Direction direction = targetFloor.getIntentDirection();
-                if (currentDirection == Direction.UP) {
-                    if (direction == Direction.UP && targetFloor.compareTo(currentFloor) > 0) {
-                        upFloors.add(targetFloor);
-                    } else {
-                        downFloors.add(targetFloor);
-                    }
-                } else {
-                    if (direction == Direction.DOWN && targetFloor.compareTo(currentFloor) < 0) {
-                        downFloors.add(targetFloor);
-                    } else {
-                        upFloors.add(targetFloor);
-                    }
-                }
-            }
-            upFloors.sort(Floor::compareTo);
-            downFloors.sort(Comparator.reverseOrder());
-            LinkedList<IntentFloor> floors = new LinkedList<>();
-            floors.addAll(upFloors);
-            floors.addAll(downFloors);
+            List<IntentFloor> intentFloors = handleUpDownFloors(targetFloors);
+
             targetFloors.clear();
-            targetFloors.addAll(floors);
+            targetFloors.addAll(intentFloors);
 
             routeFloors.clear();
-            int upMaxFloor = 0;
-            if (!upFloors.isEmpty()) {
-                int upMinFloor = Collections.min(upFloors).getIndex();
-                if (upMinFloor > currentIndex) {
-                    upMinFloor = currentIndex + 1;
-                }
-                upMaxFloor = Collections.max(upFloors).getIndex();
-                routeFloors.addAll(Stream.iterate(upMinFloor, item -> item + 1)
-                        .limit(upMaxFloor - upMinFloor + 1)
-                        .filter(item -> item != 0)
-                        .map(item -> IntentFloor.createFloor(item, Direction.UP))
-                        .collect(Collectors.toList()));
-            }
-            if (!downFloors.isEmpty()) {
-                int downMinFloor = Collections.min(downFloors).getIndex();
-                int downMaxFloor = Collections.max(downFloors).getIndex();
-                downMaxFloor = Math.max(upMaxFloor, downMaxFloor);
-                if (downMaxFloor == upMaxFloor) {
-                    downMaxFloor -= 1;
-                }
-                routeFloors.addAll(Stream.iterate(downMaxFloor, item -> item - 1)
-                        .limit(downMaxFloor - downMinFloor + 1)
-                        .filter(item -> item != 0)
-                        .map(item -> IntentFloor.createFloor(item, Direction.DOWN))
-                        .collect(Collectors.toList()));
-            }
+            routeFloors.addAll(handleRouteFloors(intentFloors));
 
-            if (status == Status.AWAIT) {
-                status = Status.RUNING;
-                if (intentFloor.compareTo(currentFloor) < 0) {
-                    currentDirection = Direction.DOWN;
-                } else if (intentFloor.compareTo(currentFloor) > 0) {
-                    currentDirection = Direction.UP;
-                } else {
-                    currentDirection = intentFloor.getIntentDirection();
-                }
-                System.out.println("电梯启动，方向" + currentDirection);
-            }
+            start(intentFloor);
             isAnalysisData = false;
         }
     }
@@ -169,12 +116,12 @@ public class Elevator implements Runnable {
                 continue;
             }
             if (routeFloors.isEmpty()) {
-                status = Status.AWAIT;
                 handle(currentFloor);
+                status = Status.AWAIT;
+                currentDirection = null;
                 System.out.println("电梯停止");
             } else {
                 currentFloor = handle(routeFloors.poll());
-                System.out.println("目标" + currentFloor);
             }
 
             try {
@@ -197,4 +144,88 @@ public class Elevator implements Runnable {
         }
         return nextFloor;
     }
+
+    private void start(IntentFloor intentFloor) {
+        if (status == Status.AWAIT) {
+            status = Status.RUNING;
+            System.out.println("电梯启动，方向" + currentDirection);
+        }
+    }
+
+    private List<IntentFloor> handleUpDownFloors(List<IntentFloor> targetFloors) {
+        List<IntentFloor> tmpTargetFloors = new ArrayList<>(targetFloors);
+        if (!tmpTargetFloors.contains(currentFloor)) {
+            tmpTargetFloors.add(currentFloor);
+        }
+        Map<Direction, List<IntentFloor>> floorMap = new HashMap<>();
+        for (IntentFloor targetFloor : tmpTargetFloors) {
+            Direction direction = targetFloor.getIntentDirection();
+            List<IntentFloor> intentFloors = floorMap.get(direction);
+            if (intentFloors == null) {
+                intentFloors = new LinkedList<>();
+            }
+            intentFloors.add(targetFloor);
+            floorMap.put(direction, intentFloors);
+        }
+        for (Direction direction : floorMap.keySet()) {
+            List<IntentFloor> intentFloors = floorMap.get(direction);
+            if (direction == Direction.UP) {
+                intentFloors.sort(Floor::compareTo);
+            } else {
+                intentFloors.sort(Comparator.reverseOrder());
+            }
+            floorMap.put(direction, intentFloors);
+        }
+        List<IntentFloor> sortedIntentFloors = new LinkedList<>();
+        int indexOf = 0;
+        List<IntentFloor> intentFloors = floorMap.get(currentDirection);
+        if (intentFloors != null) {
+            indexOf = intentFloors.indexOf(currentFloor);
+            List<IntentFloor> endFloors = intentFloors.subList(indexOf, intentFloors.size());
+            sortedIntentFloors.addAll(endFloors);
+            sortedIntentFloors.addAll(intentFloors.subList(0, indexOf));
+            indexOf = endFloors.size();
+        }
+        Direction otherDirection = currentDirection == Direction.UP ? Direction.DOWN : Direction.UP;
+        List<IntentFloor> otherFloors = floorMap.get(otherDirection);
+        if (otherFloors != null) {
+            sortedIntentFloors.addAll(indexOf, otherFloors);
+        }
+        sortedIntentFloors.remove(currentFloor);
+        return sortedIntentFloors;
+    }
+
+    private List<IntentFloor> handleRouteFloors(List<IntentFloor> targetFloors) {
+        List<IntentFloor> tmpTargetFloors = new ArrayList<>(targetFloors);
+        tmpTargetFloors.remove(currentFloor);
+        tmpTargetFloors.add(0, currentFloor);
+        int size = tmpTargetFloors.size();
+        List<IntentFloor> routeFloors = new LinkedList<>();
+        for (int i = 0; i < size; i++) {
+            IntentFloor floor = tmpTargetFloors.get(i);
+            int index = floor.getIndex();
+            int nextIndex;
+            if (i == size - 1) {
+                nextIndex = index + 1;
+            } else {
+                nextIndex = tmpTargetFloors.get(i + 1).getIndex();
+            }
+            if (index < nextIndex) {
+                routeFloors.addAll(Stream.iterate(index, item -> item + 1)
+                        .limit(nextIndex - index)
+                        .filter(item -> item != 0)
+                        .map(item -> IntentFloor.createFloor(item, Direction.UP))
+                        .collect(Collectors.toList()));
+            } else {
+                routeFloors.addAll(Stream.iterate(index, item -> item - 1)
+                        .limit(index - nextIndex)
+                        .filter(item -> item != 0)
+                        .map(item -> IntentFloor.createFloor(item, Direction.DOWN))
+                        .collect(Collectors.toList()));
+            }
+        }
+        routeFloors.remove(currentFloor);
+        return routeFloors;
+    }
+
 }
