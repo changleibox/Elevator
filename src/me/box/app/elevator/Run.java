@@ -9,6 +9,8 @@ import me.box.app.elevator.control.Manager;
 import me.box.app.elevator.enums.Direction;
 import me.box.app.elevator.model.Elevator;
 
+import java.util.Scanner;
+
 /**
  * Created by box on 2018/3/16.
  * <p>
@@ -29,11 +31,9 @@ public class Run {
         manager.ride(8, Direction.DOWN);
         manager.ride(9, Direction.DOWN);
         manager.ride(10, Direction.DOWN);
-        // try {
-        //     Thread.sleep(10000L);
-        // } catch (InterruptedException e) {
-        //     e.printStackTrace();
-        // }
-        // manager.ride(1, Direction.UP);
+        Scanner scanner = new Scanner(System.in);
+        while (scanner.hasNextInt()) {
+            manager.ride(scanner.nextInt());
+        }
     }
 }

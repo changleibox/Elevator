@@ -74,7 +74,10 @@ public class Elevator implements Runnable {
             return;
         }
 
-        stop();
+        if (mThread != null) {
+            mThread.cancel();
+            mThread = null;
+        }
 
         int currentIndex = currentFloor.getIndex();
         if (targetFloors.isEmpty()) {
@@ -114,9 +117,7 @@ public class Elevator implements Runnable {
         while (status == Status.RUNING) {
             if (routeFloors.isEmpty()) {
                 handle(currentFloor);
-                status = Status.AWAIT;
-                currentDirection = null;
-                System.out.println("电梯停止");
+                stop();
             } else {
                 currentFloor = handle(routeFloors.poll());
             }
@@ -133,6 +134,11 @@ public class Elevator implements Runnable {
             mThread.cancel();
             mThread = null;
         }
+        status = Status.AWAIT;
+        currentDirection = null;
+        routeFloors.clear();
+        targetFloors.clear();
+        System.out.println("电梯停止");
     }
 
     private Timer start(final Runnable runnable) {
@@ -213,7 +219,7 @@ public class Elevator implements Runnable {
         if (!contains) {
             sortedIntentFloors.remove(currentFloor);
         }
-        return sortedIntentFloors;
+        return new ArrayList<>(new LinkedHashSet<>(sortedIntentFloors));
     }
 
     private List<IntentFloor> handleRouteFloors(List<IntentFloor> targetFloors) {
@@ -221,7 +227,7 @@ public class Elevator implements Runnable {
         tmpTargetFloors.remove(currentFloor);
         tmpTargetFloors.add(0, currentFloor);
         int size = tmpTargetFloors.size();
-        Set<IntentFloor> routeFloors = new LinkedHashSet<>();
+        List<IntentFloor> routeFloors = new LinkedList<>();
         for (int i = 0; i < size; i++) {
             IntentFloor floor = tmpTargetFloors.get(i);
             if (i == size - 1) {
@@ -245,7 +251,7 @@ public class Elevator implements Runnable {
             }
         }
         routeFloors.remove(currentFloor);
-        return new ArrayList<>(routeFloors);
+        return new ArrayList<>(new LinkedHashSet<>(routeFloors));
     }
 
 }
