@@ -30,7 +30,7 @@ public class Elevator implements Runnable {
     public Elevator(List<OutsideFloor> floors) {
         this.status = Status.AWAIT;
         this.floorsMap = new LinkedHashMap<>();
-        this.currentFloor = IntentFloor.createFloor(Collections.max(floors));
+        this.currentFloor = IntentFloor.createFloor(2);
         this.targetFloors = new LinkedList<>();
         this.routeFloors = new LinkedList<>();
         floors.stream().sorted().forEach(floor -> floorsMap.put(floor.getIndex(), floor));
@@ -69,11 +69,12 @@ public class Elevator implements Runnable {
      */
     public void addTargetFloor(int index, Direction intentDirection) {
         synchronized (routeFloors) {
-            isAnalysisData = true;
-            int currentIndex = currentFloor.getIndex();
-            if (index == currentIndex) {
+            if (!floorsMap.containsKey(index)) {
+                System.out.println(String.format("不能到达%d楼", index));
                 return;
             }
+            isAnalysisData = true;
+            int currentIndex = currentFloor.getIndex();
             if (targetFloors.isEmpty()) {
                 currentDirection = index < currentIndex ? Direction.DOWN : Direction.UP;
                 currentFloor.setIntentDirection(currentDirection);
@@ -86,15 +87,10 @@ public class Elevator implements Runnable {
                     intentDirection = Direction.UP;
                 }
             }
-            if (!floorsMap.containsKey(index)) {
-                System.out.println(String.format("不能到达%d楼", index));
-                return;
-            }
             IntentFloor intentFloor = IntentFloor.createFloor(index, intentDirection);
-            if (targetFloors.contains(intentFloor)) {
-                return;
+            if (!targetFloors.contains(intentFloor)) {
+                targetFloors.add(intentFloor);
             }
-            targetFloors.add(intentFloor);
 
             List<IntentFloor> intentFloors = handleUpDownFloors(targetFloors);
 
@@ -154,7 +150,8 @@ public class Elevator implements Runnable {
 
     private List<IntentFloor> handleUpDownFloors(List<IntentFloor> targetFloors) {
         List<IntentFloor> tmpTargetFloors = new ArrayList<>(targetFloors);
-        if (!tmpTargetFloors.contains(currentFloor)) {
+        boolean contains = tmpTargetFloors.contains(currentFloor);
+        if (!contains) {
             tmpTargetFloors.add(currentFloor);
         }
         Map<Direction, List<IntentFloor>> floorMap = new HashMap<>();
@@ -191,7 +188,9 @@ public class Elevator implements Runnable {
         if (otherFloors != null) {
             sortedIntentFloors.addAll(indexOf, otherFloors);
         }
-        sortedIntentFloors.remove(currentFloor);
+        if (!contains) {
+            sortedIntentFloors.remove(currentFloor);
+        }
         return sortedIntentFloors;
     }
 
@@ -203,13 +202,12 @@ public class Elevator implements Runnable {
         List<IntentFloor> routeFloors = new LinkedList<>();
         for (int i = 0; i < size; i++) {
             IntentFloor floor = tmpTargetFloors.get(i);
-            int index = floor.getIndex();
-            int nextIndex;
             if (i == size - 1) {
-                nextIndex = index + 1;
-            } else {
-                nextIndex = tmpTargetFloors.get(i + 1).getIndex();
+                routeFloors.add(floor);
+                break;
             }
+            int index = floor.getIndex();
+            int nextIndex = tmpTargetFloors.get(i + 1).getIndex();
             if (index < nextIndex) {
                 routeFloors.addAll(Stream.iterate(index, item -> item + 1)
                         .limit(nextIndex - index)
