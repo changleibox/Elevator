@@ -22,16 +22,16 @@ public class Elevator implements Runnable {
     private final Map<Integer, OutsideFloor> floorsMap;
     private Direction currentDirection;
     private Status status;
-    private OutsideFloor currentFloor;
-    private final LinkedList<OutsideFloor> targetFloors;
-    private final LinkedList<OutsideFloor> routeFloors;
+    private IntentFloor currentFloor;
+    private final LinkedList<IntentFloor> targetFloors;
+    private final LinkedList<IntentFloor> routeFloors;
     private boolean isAnalysisData = true;
 
     public Elevator(List<OutsideFloor> floors) {
         this.status = Status.AWAIT;
         this.currentDirection = Direction.UP;
         this.floorsMap = new LinkedHashMap<>();
-        this.currentFloor = Collections.min(floors);
+        this.currentFloor = IntentFloor.createFloor(Collections.min(floors));
         this.targetFloors = new LinkedList<>();
         this.routeFloors = new LinkedList<>();
         floors.stream().sorted().forEach(floor -> floorsMap.put(floor.getIndex(), floor));
@@ -89,20 +89,19 @@ public class Elevator implements Runnable {
                     }
                 }
             }
-            OutsideFloor floor = floorsMap.get(index);
-            if (floor == null) {
+            if (!floorsMap.containsKey(index)) {
                 System.out.println(String.format("不能到达%d楼", index));
                 return;
             }
-            floor.setIntentDirection(intentDirection);
-            if (targetFloors.contains(floor)) {
+            IntentFloor intentFloor = IntentFloor.createFloor(index, intentDirection);
+            if (targetFloors.contains(intentFloor)) {
                 return;
             }
-            this.targetFloors.add(floor);
+            this.targetFloors.add(intentFloor);
 
-            List<OutsideFloor> upFloors = new ArrayList<>();
-            List<OutsideFloor> downFloors = new ArrayList<>();
-            for (OutsideFloor targetFloor : targetFloors) {
+            List<IntentFloor> upFloors = new ArrayList<>();
+            List<IntentFloor> downFloors = new ArrayList<>();
+            for (IntentFloor targetFloor : targetFloors) {
                 Direction direction = targetFloor.getIntentDirection();
                 if (currentDirection == Direction.UP) {
                     if (direction == Direction.UP && targetFloor.compareTo(currentFloor) > 0) {
@@ -120,7 +119,7 @@ public class Elevator implements Runnable {
             }
             upFloors.sort(Floor::compareTo);
             downFloors.sort(Comparator.reverseOrder());
-            LinkedList<OutsideFloor> floors = new LinkedList<>();
+            LinkedList<IntentFloor> floors = new LinkedList<>();
             floors.addAll(upFloors);
             floors.addAll(downFloors);
             targetFloors.clear();
@@ -133,7 +132,7 @@ public class Elevator implements Runnable {
                 upMaxFloor = Collections.max(upFloors).getIndex();
                 routeFloors.addAll(Stream.iterate(upMinFloor, item -> item + 1)
                         .limit(upMaxFloor - upMinFloor + 1)
-                        .map(item -> floorsMap.containsKey(item) ? floorsMap.get(item) : OutsideFloor.createFloor(item))
+                        .map(item -> IntentFloor.createFloor(item, Direction.UP))
                         .collect(Collectors.toList()));
             }
             if (!downFloors.isEmpty()) {
@@ -145,18 +144,18 @@ public class Elevator implements Runnable {
                 }
                 routeFloors.addAll(Stream.iterate(downMaxFloor, item -> item - 1)
                         .limit(downMaxFloor - downMinFloor + 1)
-                        .map(item -> floorsMap.containsKey(item) ? floorsMap.get(item) : OutsideFloor.createFloor(item))
+                        .map(item -> IntentFloor.createFloor(item, Direction.DOWN))
                         .collect(Collectors.toList()));
             }
 
             if (status == Status.AWAIT) {
                 status = Status.RUNING;
-                if (floor.compareTo(currentFloor) < 0) {
+                if (intentFloor.compareTo(currentFloor) < 0) {
                     currentDirection = Direction.DOWN;
-                } else if (floor.compareTo(currentFloor) > 0) {
+                } else if (intentFloor.compareTo(currentFloor) > 0) {
                     currentDirection = Direction.UP;
                 } else {
-                    currentDirection = floor.getIntentDirection();
+                    currentDirection = intentFloor.getIntentDirection();
                 }
                 System.out.println("电梯启动，方向" + currentDirection);
             }
@@ -188,7 +187,7 @@ public class Elevator implements Runnable {
         }
     }
 
-    private void handle(OutsideFloor nextFloor) {
+    private void handle(IntentFloor nextFloor) {
         StringBuilder builder = new StringBuilder("到达")
                 .append(currentFloor)
                 .append("，")

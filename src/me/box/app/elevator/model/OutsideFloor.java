@@ -19,7 +19,6 @@ import java.util.List;
 @SuppressWarnings("unused")
 public class OutsideFloor extends Floor {
 
-    private Direction intentDirection;
     private Direction[] directions;
 
     private OutsideFloor(int index, Direction[] directions) {
@@ -29,14 +28,6 @@ public class OutsideFloor extends Floor {
 
     public Direction[] getDirections() {
         return directions;
-    }
-
-    public Direction getIntentDirection() {
-        return intentDirection;
-    }
-
-    public void setIntentDirection(Direction intentDirection) {
-        this.intentDirection = intentDirection;
     }
 
     public static List<OutsideFloor> createFloors(Integer... indexs) {
