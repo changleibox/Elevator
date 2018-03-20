@@ -7,6 +7,7 @@ package me.box.app.elevator.model;
 import me.box.app.elevator.enums.Direction;
 import me.box.app.elevator.enums.Status;
 import me.box.app.elevator.util.Logger;
+import me.box.app.elevator.util.Threads;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -132,10 +133,7 @@ public class Elevator implements Runnable {
                 currentFloor = handle(routeFloors.poll());
             }
 
-            try {
-                Thread.sleep(TIME_ELEVALOR_RUN); // 电梯运行两秒钟
-            } catch (InterruptedException ignored) {
-            }
+            Threads.sleep(TIME_ELEVALOR_RUN); // 电梯运行两秒钟
         }
     }
 
@@ -170,10 +168,7 @@ public class Elevator implements Runnable {
             builder.append("---->").append("开门");
             targetFloors.remove(currentFloor);
             Logger.error(builder);
-            try {
-                Thread.sleep(TIME_DOOR_OPEN); // 电梯开门一秒钟
-            } catch (InterruptedException ignored) {
-            }
+            Threads.sleep(TIME_DOOR_OPEN); // 电梯开门一秒钟
         } else {
             Logger.debug(builder);
         }
