@@ -57,10 +57,7 @@ public class ElevatorTask extends TimerTask {
     }
 
     private IntentFloor handle(IntentFloor currentFloor) {
-        StringBuilder builder = new StringBuilder("到达")
-                .append(currentFloor)
-                .append("方向")
-                .append(currentFloor.getIntentDirection());
+        StringBuilder builder = new StringBuilder("到达").append(currentFloor);
         if (mTargetFloors.contains(currentFloor)) {
             builder.append("---->").append("开门");
             mTargetFloors.remove(currentFloor);
