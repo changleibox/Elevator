@@ -62,6 +62,12 @@ public class Elevator {
         this.currentFloor = currentFloor;
     }
 
+    void removeFloor(IntentFloor floor) {
+        synchronized (mLock) {
+            targetFloors.remove(floor);
+        }
+    }
+
     /**
      * 点击电梯里边儿面板楼层
      *
@@ -119,12 +125,6 @@ public class Elevator {
             currentDirection = null;
             targetFloors.clear();
             Logger.error("电梯停止");
-        }
-    }
-
-    void removeFloor(IntentFloor floor) {
-        synchronized (mLock) {
-            targetFloors.remove(floor);
         }
     }
 
