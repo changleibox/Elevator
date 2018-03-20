@@ -179,23 +179,22 @@ public class ElevatorTask extends TimerTask {
             int index = floor.getIndex();
             Direction direction = floor.getIntentDirection();
             int nextIndex = tmpTargetFloors.get(i + 1).getIndex();
-            if (index < nextIndex) {
-                routeFloors.addAll(Stream.iterate(index, item -> item + 1)
-                        .limit(nextIndex - index)
-                        .filter(item -> item != 0)
-                        .map(item -> IntentFloor.createFloor(item, item == index ? direction : Direction.UP))
-                        .collect(Collectors.toList()));
-            } else {
-                routeFloors.addAll(Stream.iterate(index, item -> item - 1)
-                        .limit(index - nextIndex)
-                        .filter(item -> item != 0)
-                        .map(item -> IntentFloor.createFloor(item, item == index ? direction : Direction.DOWN))
-                        .collect(Collectors.toList()));
-            }
+            routeFloors.addAll(createRoute(index, nextIndex, direction));
         }
         if (!contains) {
             routeFloors.remove(currentFloor);
         }
         return new ArrayList<>(new LinkedHashSet<>(routeFloors));
+    }
+
+    private List<IntentFloor> createRoute(int index, int nextIndex, Direction direction) {
+        boolean asc = index < nextIndex;
+        int itemCount = asc ? nextIndex - index : index - nextIndex;
+        Direction defDirection = asc ? Direction.UP : Direction.DOWN;
+        return Stream.iterate(index, item -> asc ? item + 1 : item - 1)
+                .limit(itemCount)
+                .filter(item -> item != 0)
+                .map(item -> IntentFloor.createFloor(item, item == index ? direction : defDirection))
+                .collect(Collectors.toList());
     }
 }
