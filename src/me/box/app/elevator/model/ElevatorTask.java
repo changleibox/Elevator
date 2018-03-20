@@ -29,22 +29,18 @@ public class ElevatorTask extends TimerTask {
 
     ElevatorTask(Elevator elevator) {
         this.mElevator = elevator;
-        this.mTargetFloors = new LinkedList<>(elevator.getTargetFloors());
+        this.mTargetFloors = new LinkedList<>();
         this.mRouteFloors = new LinkedList<>();
+
+        List<IntentFloor> intentFloors = handleUpDownFloors(elevator.getTargetFloors());
+
+        mTargetFloors.addAll(intentFloors);
+        mRouteFloors.addAll(handleRouteFloors(intentFloors));
+        Logger.notset(mRouteFloors);
     }
 
     @Override
     public void run() {
-        List<IntentFloor> intentFloors = handleUpDownFloors(mTargetFloors);
-
-        mTargetFloors.clear();
-        mTargetFloors.addAll(intentFloors);
-
-        mRouteFloors.clear();
-        mRouteFloors.addAll(handleRouteFloors(intentFloors));
-
-        Logger.notset(mRouteFloors);
-
         while (mElevator.getStatus() == Status.RUNING) {
             if (mRouteFloors.isEmpty()) {
                 handle(mElevator.getCurrentFloor());

@@ -19,6 +19,8 @@ import static me.box.app.elevator.common.Constant.TIME_APPLICATION_DELAY;
  */
 public class Elevator {
 
+    private final Object mLock = new Object();
+
     private final Map<Integer, OutsideFloor> floorsMap;
     private final LinkedList<IntentFloor> targetFloors;
     private Direction currentDirection;
@@ -76,52 +78,58 @@ public class Elevator {
      * @param intentDirection 上还是下
      */
     public void addTargetFloor(int index, Direction intentDirection) {
-        if (!floorsMap.containsKey(index)) {
-            Logger.warning(String.format("不能到达%d楼", index));
-            return;
-        }
-
-        stopTimer();
-
-        int currentIndex = currentFloor.getIndex();
-        if (targetFloors.isEmpty()) {
-            currentDirection = index < currentIndex ? Direction.DOWN : Direction.UP;
-            currentFloor.setIntentDirection(currentDirection);
-        }
-        if (intentDirection == null) {
-            if ((currentDirection == Direction.UP && index < currentIndex)
-                    || (currentDirection == Direction.DOWN && index > currentIndex)) {
-                intentDirection = Direction.DOWN;
-            } else {
-                intentDirection = Direction.UP;
+        synchronized (mLock) {
+            if (!floorsMap.containsKey(index)) {
+                Logger.warning(String.format("不能到达%d楼", index));
+                return;
             }
-        }
-        IntentFloor intentFloor = IntentFloor.createFloor(index, intentDirection);
-        if (!targetFloors.contains(intentFloor)) {
-            targetFloors.add(intentFloor);
-        }
 
-        if (status == Status.AWAIT) {
-            status = Status.RUNING;
-            Logger.debug("电梯启动，方向" + currentDirection);
+            stopTimer();
+
+            int currentIndex = currentFloor.getIndex();
+            if (targetFloors.isEmpty()) {
+                currentDirection = index < currentIndex ? Direction.DOWN : Direction.UP;
+                currentFloor.setIntentDirection(currentDirection);
+            }
+            if (intentDirection == null) {
+                if ((currentDirection == Direction.UP && index < currentIndex)
+                        || (currentDirection == Direction.DOWN && index > currentIndex)) {
+                    intentDirection = Direction.DOWN;
+                } else {
+                    intentDirection = Direction.UP;
+                }
+            }
+            IntentFloor intentFloor = IntentFloor.createFloor(index, intentDirection);
+            if (!targetFloors.contains(intentFloor)) {
+                targetFloors.add(intentFloor);
+            }
+
+            if (status == Status.AWAIT) {
+                status = Status.RUNING;
+                Logger.debug("电梯启动，方向" + currentDirection);
+            }
+            mTimer.schedule(mTimerTask = new ElevatorTask(this), TIME_APPLICATION_DELAY);
         }
-        mTimer.schedule(mTimerTask = new ElevatorTask(this), TIME_APPLICATION_DELAY);
     }
 
     public void stop() {
-        stopTimer();
-        status = Status.AWAIT;
-        currentDirection = null;
-        targetFloors.clear();
-        Logger.error("电梯停止");
+        synchronized (mLock) {
+            stopTimer();
+            status = Status.AWAIT;
+            currentDirection = null;
+            targetFloors.clear();
+            Logger.error("电梯停止");
+        }
     }
 
     private void stopTimer() {
-        if (mTimerTask != null) {
-            mTimerTask.cancel();
-            mTimerTask = null;
+        synchronized (mLock) {
+            if (mTimerTask != null) {
+                mTimerTask.cancel();
+                mTimerTask = null;
+            }
+            mTimer.purge();
         }
-        mTimer.purge();
     }
 
 }
