@@ -6,10 +6,15 @@ package me.box.app.elevator.model;
 
 import me.box.app.elevator.enums.Direction;
 import me.box.app.elevator.enums.Status;
+import me.box.app.elevator.util.Logger;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static me.box.app.elevator.common.Constant.TIME_APPLICATION_DELAY;
+import static me.box.app.elevator.common.Constant.TIME_DOOR_OPEN;
+import static me.box.app.elevator.common.Constant.TIME_ELEVALOR_RUN;
 
 /**
  * Created by box on 2018/3/16.
@@ -71,7 +76,7 @@ public class Elevator implements Runnable {
      */
     public void addTargetFloor(int index, Direction intentDirection) {
         if (!floorsMap.containsKey(index)) {
-            System.out.println(String.format("不能到达%d楼", index));
+            Logger.warning(String.format("不能到达%d楼", index));
             return;
         }
 
@@ -105,16 +110,16 @@ public class Elevator implements Runnable {
 
         if (status == Status.AWAIT) {
             status = Status.RUNING;
-            System.out.println("\033[36m电梯启动，方向" + currentDirection + "\033[0m");
+            Logger.debug("电梯启动，方向" + currentDirection);
         }
-        System.out.println(Arrays.toString(routeFloors.toArray()));
+        Logger.notset(routeFloors);
         mTimerTask = new TimerTask() {
             @Override
             public void run() {
                 Elevator.this.run();
             }
         };
-        mTimer.schedule(mTimerTask, 500L);
+        mTimer.schedule(mTimerTask, TIME_APPLICATION_DELAY);
     }
 
     @Override
@@ -128,7 +133,7 @@ public class Elevator implements Runnable {
             }
 
             try {
-                Thread.sleep(2000L); // 电梯运行两秒钟
+                Thread.sleep(TIME_ELEVALOR_RUN); // 电梯运行两秒钟
             } catch (InterruptedException ignored) {
             }
         }
@@ -140,7 +145,7 @@ public class Elevator implements Runnable {
         currentDirection = null;
         routeFloors.clear();
         targetFloors.clear();
-        System.out.println("\33[31m电梯停止\033[0m");
+        Logger.error("电梯停止");
     }
 
     private void stopTimer() {
@@ -162,16 +167,16 @@ public class Elevator implements Runnable {
                 .append("方向")
                 .append(currentDirection);
         if (targetFloors.contains(currentFloor)) {
-            builder.append("\n");
-            builder.append("\33[92m开门\033[0m");
+            builder.append("---->");
+            builder.append("开门");
             targetFloors.remove(currentFloor);
-            System.out.println(builder);
+            Logger.error(builder);
             try {
-                Thread.sleep(1000L); // 电梯开门一秒钟
+                Thread.sleep(TIME_DOOR_OPEN); // 电梯开门一秒钟
             } catch (InterruptedException ignored) {
             }
         } else {
-            System.out.println(builder);
+            Logger.debug(builder);
         }
         return nextFloor;
     }

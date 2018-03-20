@@ -11,4 +11,8 @@ package me.box.app.elevator.common;
  */
 public class Constant {
 
+    public static final long TIME_APPLICATION_DELAY = 500L;
+    public static final long TIME_ELEVALOR_RUN = 2000L;
+    public static final long TIME_DOOR_OPEN = 1000L;
+
 }
