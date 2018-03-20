@@ -89,7 +89,7 @@ public class Elevator {
             if (intentFloor == null) {
                 return;
             }
-            Logger.notset(intentFloor);
+            Logger.notset("新加入" + intentFloor);
 
             List<IntentFloor> orgTargetFloors = null;
             List<IntentFloor> routeFloors = null;
