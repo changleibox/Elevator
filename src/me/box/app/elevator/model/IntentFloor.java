@@ -30,6 +30,11 @@ public class IntentFloor extends Floor {
     }
 
     @Override
+    public String toString() {
+        return super.toString() + intentDirection;
+    }
+
+    @Override
     public boolean equals(Object obj) {
         return super.equals(obj) && ((IntentFloor) obj).getIntentDirection() == intentDirection;
     }

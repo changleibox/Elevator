@@ -42,30 +42,25 @@ public class ElevatorTask extends TimerTask {
     @Override
     public void run() {
         while (mElevator.getStatus() == Status.RUNING) {
+            IntentFloor currentFloor;
             if (mRouteFloors.isEmpty()) {
-                handle(mElevator.getCurrentFloor());
+                currentFloor = handle(mElevator.getCurrentFloor());
                 mElevator.stop();
             } else {
-                mElevator.setCurrentFloor(handle(mRouteFloors.poll()));
+                currentFloor = handle(mRouteFloors.poll());
+                mElevator.setCurrentDirection(currentFloor.getIntentDirection());
             }
+            mElevator.setCurrentFloor(currentFloor);
 
             Threads.sleep(TIME_ELEVALOR_RUN); // 电梯运行两秒钟
         }
     }
 
-    private IntentFloor handle(IntentFloor nextFloor) {
-        IntentFloor currentFloor = mElevator.getCurrentFloor();
-        Direction currentDirection = mElevator.getCurrentDirection();
-        if (currentFloor.compareTo(nextFloor) < 0) {
-            currentDirection = Direction.UP;
-        } else if (currentFloor.compareTo(nextFloor) > 0) {
-            currentDirection = Direction.DOWN;
-        }
-        mElevator.setCurrentDirection(currentDirection);
+    private IntentFloor handle(IntentFloor currentFloor) {
         StringBuilder builder = new StringBuilder("到达")
                 .append(currentFloor)
                 .append("方向")
-                .append(mElevator.getCurrentDirection());
+                .append(currentFloor.getIntentDirection());
         if (mTargetFloors.contains(currentFloor)) {
             builder.append("---->").append("开门");
             mTargetFloors.remove(currentFloor);
@@ -74,7 +69,7 @@ public class ElevatorTask extends TimerTask {
         } else {
             Logger.debug(builder);
         }
-        return nextFloor;
+        return currentFloor;
     }
 
     private List<IntentFloor> handleUpDownFloors(List<IntentFloor> targetFloors) {
@@ -153,7 +148,6 @@ public class ElevatorTask extends TimerTask {
                         .collect(Collectors.toList()));
             }
         }
-        routeFloors.remove(currentFloor);
         return new ArrayList<>(new LinkedHashSet<>(routeFloors));
     }
 }
