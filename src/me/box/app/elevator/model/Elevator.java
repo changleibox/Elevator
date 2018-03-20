@@ -23,11 +23,10 @@ import static me.box.app.elevator.common.Constant.TIME_ELEVALOR_RUN;
  * 电梯
  */
 @SuppressWarnings({"unused", "InfiniteLoopStatement", "WeakerAccess"})
-public class Elevator implements Runnable {
+public class Elevator {
 
     private final Map<Integer, OutsideFloor> floorsMap;
     private final LinkedList<IntentFloor> targetFloors;
-    private final LinkedList<IntentFloor> routeFloors;
     private Direction currentDirection;
     private IntentFloor currentFloor;
     private Status status;
@@ -40,7 +39,6 @@ public class Elevator implements Runnable {
         this.floorsMap = new LinkedHashMap<>();
         this.currentFloor = IntentFloor.createFloor(3);
         this.targetFloors = new LinkedList<>();
-        this.routeFloors = new LinkedList<>();
         floors.stream().sorted().forEach(floor -> floorsMap.put(floor.getIndex(), floor));
     }
 
@@ -101,47 +99,17 @@ public class Elevator implements Runnable {
             targetFloors.add(intentFloor);
         }
 
-        List<IntentFloor> intentFloors = handleUpDownFloors(targetFloors);
-
-        targetFloors.clear();
-        targetFloors.addAll(intentFloors);
-
-        routeFloors.clear();
-        routeFloors.addAll(handleRouteFloors(intentFloors));
-
         if (status == Status.AWAIT) {
             status = Status.RUNING;
             Logger.debug("电梯启动，方向" + currentDirection);
         }
-        Logger.notset(routeFloors);
-        mTimerTask = new TimerTask() {
-            @Override
-            public void run() {
-                Elevator.this.run();
-            }
-        };
-        mTimer.schedule(mTimerTask, TIME_APPLICATION_DELAY);
-    }
-
-    @Override
-    public void run() {
-        while (status == Status.RUNING) {
-            if (routeFloors.isEmpty()) {
-                handle(currentFloor);
-                stop();
-            } else {
-                currentFloor = handle(routeFloors.poll());
-            }
-
-            Threads.sleep(TIME_ELEVALOR_RUN); // 电梯运行两秒钟
-        }
+        mTimer.schedule(mTimerTask = new ElevatorTask(targetFloors), TIME_APPLICATION_DELAY);
     }
 
     public void stop() {
         stopTimer();
         status = Status.AWAIT;
         currentDirection = null;
-        routeFloors.clear();
         targetFloors.clear();
         Logger.error("电梯停止");
     }
@@ -250,6 +218,49 @@ public class Elevator implements Runnable {
         }
         routeFloors.remove(currentFloor);
         return new ArrayList<>(new LinkedHashSet<>(routeFloors));
+    }
+
+    private class ElevatorTask extends TimerTask {
+
+        private final LinkedList<IntentFloor> mRouteFloors;
+        private List<IntentFloor> mTargetFloors;
+
+        ElevatorTask(List<IntentFloor> targetFloors) {
+            this.mTargetFloors = targetFloors;
+            this.mRouteFloors = new LinkedList<>();
+        }
+
+        @Override
+        public void run() {
+            List<IntentFloor> intentFloors = handleUpDownFloors(mTargetFloors);
+
+            mTargetFloors.clear();
+            mTargetFloors.addAll(intentFloors);
+
+            mRouteFloors.clear();
+            mRouteFloors.addAll(handleRouteFloors(intentFloors));
+
+            Logger.notset(mRouteFloors);
+
+            while (status == Status.RUNING) {
+                if (mRouteFloors.isEmpty()) {
+                    handle(currentFloor);
+                    stop();
+                } else {
+                    currentFloor = handle(mRouteFloors.poll());
+                }
+
+                Threads.sleep(TIME_ELEVALOR_RUN); // 电梯运行两秒钟
+            }
+        }
+
+        @Override
+        public boolean cancel() {
+            boolean cancel = super.cancel();
+            mTargetFloors.clear();
+            mRouteFloors.clear();
+            return cancel;
+        }
     }
 
 }
