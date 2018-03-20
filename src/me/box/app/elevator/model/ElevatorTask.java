@@ -21,6 +21,7 @@ import static me.box.app.elevator.common.Constant.TIME_ELEVALOR_RUN;
  * <p>
  * 电梯运行过程
  */
+@SuppressWarnings("unused")
 public class ElevatorTask extends TimerTask {
 
     private final LinkedList<IntentFloor> mRouteFloors;
@@ -39,6 +40,14 @@ public class ElevatorTask extends TimerTask {
         mTargetFloors.addAll(intentFloors);
         mRouteFloors.addAll(handleRouteFloors(intentFloors));
         Logger.notset(mRouteFloors);
+    }
+
+    public List<IntentFloor> getTargetFloors() {
+        return Collections.unmodifiableList(mTargetFloors);
+    }
+
+    public List<IntentFloor> getRouteFloors() {
+        return Collections.unmodifiableList(mRouteFloors);
     }
 
     @Override

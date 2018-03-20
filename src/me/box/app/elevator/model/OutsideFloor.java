@@ -26,6 +26,10 @@ public class OutsideFloor extends Floor {
         this.directions = directions;
     }
 
+    public boolean containsDirection(Direction direction) {
+        return Arrays.asList(directions).contains(direction);
+    }
+
     public Direction[] getDirections() {
         return directions;
     }

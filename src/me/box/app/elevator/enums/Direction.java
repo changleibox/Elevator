@@ -17,4 +17,12 @@ public enum Direction {
     public String toString() {
         return this == UP ? "⬆" : "⬇";
     }
+
+    public boolean isUp() {
+        return this == UP;
+    }
+
+    public boolean isDown() {
+        return this == DOWN;
+    }
 }

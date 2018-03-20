@@ -85,34 +85,18 @@ public class Elevator {
      */
     public void addTargetFloor(int index, Direction intentDirection) {
         synchronized (mLock) {
-            if (!floorsMap.containsKey(index)) {
-                Logger.warning(String.format("不能到达%d楼", index));
+            IntentFloor intentFloor = handleNewFloor(index, intentDirection);
+            if (intentFloor == null) {
                 return;
             }
 
             stopTimer();
 
-            int currentIndex = currentFloor.getIndex();
-            if (targetFloors.isEmpty()) {
-                currentDirection = index < currentIndex ? Direction.DOWN : Direction.UP;
-                currentFloor.setIntentDirection(currentDirection);
-            }
-            if (intentDirection == null) {
-                if ((currentDirection == Direction.UP && index < currentIndex)
-                        || (currentDirection == Direction.DOWN && index > currentIndex)) {
-                    intentDirection = Direction.DOWN;
-                } else {
-                    intentDirection = Direction.UP;
-                }
-            }
-            IntentFloor intentFloor = IntentFloor.createFloor(index, intentDirection);
-            if (!targetFloors.contains(intentFloor)) {
-                targetFloors.add(intentFloor);
-            }
+            targetFloors.add(intentFloor);
 
             if (status == Status.AWAIT) {
                 status = Status.RUNING;
-                Logger.debug("电梯启动，方向" + currentDirection);
+                Logger.debug("电梯启动，方向" + currentFloor);
             }
             mTimer.schedule(mTimerTask = new ElevatorTask(this), TIME_APPLICATION_DELAY);
         }
@@ -136,6 +120,45 @@ public class Elevator {
             }
             mTimer.purge();
         }
+    }
+
+    private boolean isInvalidIntentFloor(int index, Direction intentDirection) {
+        OutsideFloor outsideFloor = floorsMap.get(index);
+        if (outsideFloor == null) {
+            Logger.warning(String.format("不能到达%d楼", index));
+            return true;
+        }
+        return intentDirection != null && !outsideFloor.containsDirection(intentDirection);
+    }
+
+    private IntentFloor handleNewFloor(int index, Direction intentDirection) {
+        if (isInvalidIntentFloor(index, intentDirection)) {
+            Logger.warning(String.format("不能到达%d楼", index));
+            return null;
+        }
+
+        Direction direction = this.currentDirection;
+        int currentIndex = currentFloor.getIndex();
+        if (targetFloors.isEmpty()) {
+            direction = index < currentIndex ? Direction.DOWN : Direction.UP;
+        }
+        if (intentDirection == null) {
+            if ((direction.isUp() && index < currentIndex) || (direction.isDown() && index > currentIndex)) {
+                intentDirection = Direction.DOWN;
+            } else {
+                intentDirection = Direction.UP;
+            }
+        }
+        IntentFloor intentFloor = IntentFloor.createFloor(index, intentDirection);
+        if (targetFloors.contains(intentFloor) || isInvalidIntentFloor(index, intentDirection)) {
+            return null;
+        }
+
+        if (direction != null) {
+            this.currentDirection = direction;
+            currentFloor.setIntentDirection(direction);
+        }
+        return intentFloor;
     }
 
 }
