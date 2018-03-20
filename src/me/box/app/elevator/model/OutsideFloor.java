@@ -31,16 +31,21 @@ public class OutsideFloor extends Floor {
     }
 
     public static List<OutsideFloor> createFloors(Integer... indexs) {
-        int min = Collections.min(Arrays.asList(indexs));
-        int max = Collections.max(Arrays.asList(indexs));
+        List<Integer> tmpIndexs = new ArrayList<>(Arrays.asList(indexs));
+        tmpIndexs.removeIf(item -> item == null || item == 0);
+        if (tmpIndexs.isEmpty()) {
+            throw new NullPointerException("请创建至少一层楼");
+        }
+        Integer min = Collections.min(tmpIndexs);
+        Integer max = Collections.max(tmpIndexs);
         List<OutsideFloor> floors = new ArrayList<>();
-        for (int index : indexs) {
+        for (Integer index : tmpIndexs) {
             Direction[] directions = new Direction[0];
-            if (min == index) {
+            if (min.equals(index)) {
                 directions = new Direction[]{Direction.UP};
-            } else if (max == index) {
+            } else if (max.equals(index)) {
                 directions = new Direction[]{Direction.DOWN};
-            } else if (min != max) {
+            } else if (!min.equals(max)) {
                 directions = Direction.values();
             }
             floors.add(createFloor(index, directions));

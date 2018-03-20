@@ -57,14 +57,6 @@ public class ElevatorTask extends TimerTask {
         }
     }
 
-    @Override
-    public boolean cancel() {
-        boolean cancel = super.cancel();
-        mTargetFloors.clear();
-        mRouteFloors.clear();
-        return cancel;
-    }
-
     private IntentFloor handle(IntentFloor nextFloor) {
         IntentFloor currentFloor = mElevator.getCurrentFloor();
         Direction currentDirection = mElevator.getCurrentDirection();
