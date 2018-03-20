@@ -167,8 +167,7 @@ public class Elevator implements Runnable {
                 .append("方向")
                 .append(currentDirection);
         if (targetFloors.contains(currentFloor)) {
-            builder.append("---->");
-            builder.append("开门");
+            builder.append("---->").append("开门");
             targetFloors.remove(currentFloor);
             Logger.error(builder);
             try {
