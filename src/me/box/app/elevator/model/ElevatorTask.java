@@ -40,6 +40,16 @@ public class ElevatorTask extends TimerTask {
         mTargetFloors.addAll(intentFloors);
         mRouteFloors.addAll(handleRouteFloors(intentFloors));
         Logger.notset(mRouteFloors);
+        Logger.notset("新创建的信息");
+    }
+
+    ElevatorTask(Elevator elevator, List<IntentFloor> targetFloors, List<IntentFloor> routeFloors) {
+        this.mElevator = elevator;
+        this.mTargetFloors = new LinkedList<>(targetFloors);
+        this.mRouteFloors = new LinkedList<>(routeFloors);
+
+        Logger.notset(mRouteFloors);
+        Logger.notset("使用上次的信息");
     }
 
     public List<IntentFloor> getTargetFloors() {

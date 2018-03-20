@@ -28,7 +28,7 @@ public class Elevator {
     private Status status;
 
     private final Timer mTimer = new Timer();
-    private TimerTask mTimerTask;
+    private ElevatorTask mTimerTask;
 
     public Elevator(List<OutsideFloor> floors) {
         this.status = Status.AWAIT;
@@ -74,7 +74,7 @@ public class Elevator {
      * @param index 楼层
      */
     public void addTargetFloor(int index) {
-        addTargetFloor(index, null);
+        addTargetFloor(index, index < currentFloor.getIndex() ? Direction.DOWN : Direction.UP);
     }
 
     /**
@@ -89,7 +89,14 @@ public class Elevator {
             if (intentFloor == null) {
                 return;
             }
+            Logger.notset(intentFloor);
 
+            List<IntentFloor> orgTargetFloors = null;
+            List<IntentFloor> routeFloors = null;
+            if (mTimerTask != null) {
+                orgTargetFloors = mTimerTask.getTargetFloors();
+                routeFloors = mTimerTask.getRouteFloors();
+            }
             stopTimer();
 
             targetFloors.add(intentFloor);
@@ -98,7 +105,14 @@ public class Elevator {
                 status = Status.RUNING;
                 Logger.debug("电梯启动，方向" + currentFloor);
             }
-            mTimer.schedule(mTimerTask = new ElevatorTask(this), TIME_APPLICATION_DELAY);
+            if (routeFloors != null && routeFloors.contains(intentFloor)) {
+                orgTargetFloors = new ArrayList<>(orgTargetFloors);
+                orgTargetFloors.add(intentFloor);
+                mTimerTask = new ElevatorTask(this, orgTargetFloors, routeFloors);
+            } else {
+                mTimerTask = new ElevatorTask(this);
+            }
+            mTimer.schedule(mTimerTask, TIME_APPLICATION_DELAY);
         }
     }
 
@@ -128,7 +142,7 @@ public class Elevator {
             Logger.warning(String.format("不能到达%d楼", index));
             return true;
         }
-        return intentDirection != null && !outsideFloor.containsDirection(intentDirection);
+        return !outsideFloor.containsDirection(intentDirection);
     }
 
     private IntentFloor handleNewFloor(int index, Direction intentDirection) {
@@ -136,28 +150,17 @@ public class Elevator {
             Logger.warning(String.format("不能到达%d楼", index));
             return null;
         }
-
-        Direction direction = this.currentDirection;
-        int currentIndex = currentFloor.getIndex();
-        if (targetFloors.isEmpty()) {
-            direction = index < currentIndex ? Direction.DOWN : Direction.UP;
-        }
-        if (intentDirection == null) {
-            if ((direction.isUp() && index < currentIndex) || (direction.isDown() && index > currentIndex)) {
-                intentDirection = Direction.DOWN;
-            } else {
-                intentDirection = Direction.UP;
-            }
-        }
         IntentFloor intentFloor = IntentFloor.createFloor(index, intentDirection);
-        if (targetFloors.contains(intentFloor) || isInvalidIntentFloor(index, intentDirection)) {
+        if (targetFloors.contains(intentFloor)) {
             return null;
         }
 
-        if (direction != null) {
-            this.currentDirection = direction;
-            currentFloor.setIntentDirection(direction);
+        int currentIndex = currentFloor.getIndex();
+        if (targetFloors.isEmpty()) {
+            currentDirection = index < currentIndex ? Direction.DOWN : Direction.UP;
+            currentFloor.setIntentDirection(currentDirection);
         }
+
         return intentFloor;
     }
 
