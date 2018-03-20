@@ -21,7 +21,7 @@ public class Run {
     public static void main(String[] args) {
         Elevator elevator = Assembler.assemble();
         Manager manager = new Manager(elevator);
-        manager.ride(-1, Direction.UP);
+        manager.ride(-1, Direction.DOWN);
         manager.ride(2, Direction.DOWN);
         manager.ride(3, Direction.UP);
         manager.ride(4, Direction.UP);
@@ -30,7 +30,7 @@ public class Run {
         manager.ride(7, Direction.UP);
         manager.ride(8, Direction.DOWN);
         manager.ride(9, Direction.DOWN);
-        manager.ride(10, Direction.DOWN);
+        manager.ride(10, Direction.UP);
         Scanner scanner = new Scanner(System.in);
         while (scanner.hasNextInt()) {
             manager.ride(scanner.nextInt());

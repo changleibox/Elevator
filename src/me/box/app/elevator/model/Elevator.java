@@ -122,6 +122,12 @@ public class Elevator {
         }
     }
 
+    void removeFloor(IntentFloor floor) {
+        synchronized (mLock) {
+            targetFloors.remove(floor);
+        }
+    }
+
     private void stopTimer() {
         synchronized (mLock) {
             if (mTimerTask != null) {

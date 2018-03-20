@@ -66,7 +66,7 @@ public class Logger {
         System.out.println(formatMsg(level, msg));
     }
 
-    private static String formatMsg(Level level, Object msg) {
+    public static String formatMsg(Level level, Object msg) {
         if (msg != null && msg instanceof Collection) {
             msg = ((Collection) msg).toArray();
         }
