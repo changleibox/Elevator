@@ -58,7 +58,7 @@ public class ElevatorTask extends TimerTask {
             mRouteFloors.clear();
             mRouteFloors.addAll(handleRouteFloors(mTargetFloors));
         }
-        Logger.notset(mRouteFloors);
+        Logger.critical("路径楼层", mRouteFloors);
 
         while (!canceled && mElevator.getStatus() == Status.RUNING) {
             if (!handleCurrentFloor(mRouteFloors)) {
@@ -97,9 +97,9 @@ public class ElevatorTask extends TimerTask {
                 .createFloor(currentFloor.getIndex(), mElevator.getCurrentDirection()));
         if (mTargetFloors.contains(currentFloor)) {
             builder.append("---->").append("\033[31m开门\033[36m");
-            Logger.debug(builder);
+            Logger.debug("楼层信息", builder);
         } else {
-            Logger.debug(builder);
+            Logger.debug("楼层信息", builder);
         }
     }
 

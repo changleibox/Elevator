@@ -35,44 +35,73 @@ public class Logger {
     }
 
     public static void header(Object msg) {
-        log(Level.HEADER, msg);
+        header(Level.HEADER, msg);
     }
 
     public static void info(Object msg) {
-        log(Level.INFO, msg);
+        info(Level.INFO, msg);
     }
 
     public static void debug(Object msg) {
-        log(Level.DEBUG, msg);
+        debug(Level.DEBUG, msg);
     }
 
     public static void warning(Object msg) {
-        log(Level.WARNING, msg);
+        warning(Level.WARNING, msg);
     }
 
     public static void error(Object msg) {
-        log(Level.ERROR, msg);
+        error(Level.ERROR, msg);
     }
 
     public static void critical(Object msg) {
-        log(Level.CRITICAL, msg);
+        critical(Level.CRITICAL, msg);
     }
 
     public static void notset(Object msg) {
-        log(Level.NOTSET, msg);
+        notset(Level.NOTSET, msg);
     }
 
-    public static void log(Level level, Object msg) {
-        System.out.println(formatMsg(level, msg));
+    public static void header(Object tag, Object msg) {
+        log(Level.HEADER, tag, msg);
     }
 
-    public static String formatMsg(Level level, Object msg) {
+    public static void info(Object tag, Object msg) {
+        log(Level.INFO, tag, msg);
+    }
+
+    public static void debug(Object tag, Object msg) {
+        log(Level.DEBUG, tag, msg);
+    }
+
+    public static void warning(Object tag, Object msg) {
+        log(Level.WARNING, tag, msg);
+    }
+
+    public static void error(Object tag, Object msg) {
+        log(Level.ERROR, tag, msg);
+    }
+
+    public static void critical(Object tag, Object msg) {
+        log(Level.CRITICAL, tag, msg);
+    }
+
+    public static void notset(Object tag, Object msg) {
+        log(Level.NOTSET, tag, msg);
+    }
+
+    public static void log(Level level, Object tag, Object msg) {
+        System.out.println(formatMsg(level, tag, msg));
+    }
+
+    public static String formatMsg(Level level, Object tag, Object msg) {
         if (msg != null && msg instanceof Collection) {
             msg = ((Collection) msg).toArray();
         }
         if (msg != null && msg.getClass().isArray()) {
             msg = Arrays.toString((Object[]) msg);
         }
-        return String.format("%s%s: %s%s", COLORS.get(level), level.name(), msg, COLORS.get(Level.ENDC));
+        return String.format("%s%s: %s%s", COLORS.get(level),
+                tag == null ? level.name() : tag, msg, COLORS.get(Level.ENDC));
     }
 }

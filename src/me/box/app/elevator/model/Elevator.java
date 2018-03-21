@@ -89,7 +89,7 @@ public class Elevator {
             if (intentFloor == null) {
                 return;
             }
-            Logger.notset("新加入" + intentFloor);
+            Logger.notset("新加楼层", "新加入" + intentFloor);
 
             List<IntentFloor> orgTargetFloors = null;
             List<IntentFloor> routeFloors = null;
@@ -103,7 +103,7 @@ public class Elevator {
 
             if (status == Status.AWAIT) {
                 status = Status.RUNING;
-                Logger.debug("电梯启动，方向" + currentFloor);
+                Logger.error("电梯状态", "电梯启动，方向" + currentFloor);
             }
             if (routeFloors != null && routeFloors.contains(intentFloor)) {
                 orgTargetFloors = new ArrayList<>(orgTargetFloors);
@@ -122,7 +122,7 @@ public class Elevator {
             status = Status.AWAIT;
             currentDirection = null;
             targetFloors.clear();
-            Logger.error("电梯停止");
+            Logger.error("电梯状态", "电梯停止");
         }
     }
 
