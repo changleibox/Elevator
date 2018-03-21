@@ -18,7 +18,7 @@ import java.util.Scanner;
 public class Run {
 
     public static void main(String[] args) {
-        ElevatorManager manager = Assembler.assemble().getManager();
+        ElevatorManager manager = Assembler.install();
         manager.ride(-1, Direction.DOWN);
         manager.ride(2, Direction.DOWN);
         manager.ride(3, Direction.UP);

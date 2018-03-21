@@ -16,12 +16,24 @@ import java.util.stream.Stream;
 @SuppressWarnings("SameParameterValue")
 public class Assembler {
 
+    private ElevatorManager mElevatorManager;
+
+    public static ElevatorManager install() {
+        Assembler assembler = new Assembler();
+        ElevatorManager manager = assembler.mElevatorManager;
+        if (manager == null) {
+            manager = new ElevatorManager(assembler.assemble());
+            assembler.mElevatorManager = manager;
+        }
+        return manager;
+    }
+
     /**
      * 组装电梯
      *
      * @return 组装好的电梯
      */
-    public static Elevator assemble() {
+    private Elevator assemble() {
         return new Elevator(OutsideFloor.createFloors(range(-2, 1, 14)));
     }
 

@@ -32,8 +32,6 @@ public class Elevator {
     private final Timer mTimer = new Timer();
     private ElevatorTask mTimerTask;
 
-    private ElevatorManager mElevatorManager;
-
     Elevator(List<OutsideFloor> floors) {
         this.status = Status.AWAIT;
         this.floorsMap = new LinkedHashMap<>();
@@ -128,13 +126,6 @@ public class Elevator {
             targetFloors.clear();
             Logger.error("电梯状态", "电梯停止");
         }
-    }
-
-    public ElevatorManager getManager() {
-        if (mElevatorManager == null) {
-            mElevatorManager = new ElevatorManager(this);
-        }
-        return mElevatorManager;
     }
 
     private void stopTimer() {
