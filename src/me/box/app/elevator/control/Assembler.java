@@ -4,7 +4,6 @@
 
 package me.box.app.elevator.control;
 
-import me.box.app.elevator.model.Elevator;
 import me.box.app.elevator.model.OutsideFloor;
 
 import java.util.stream.Stream;

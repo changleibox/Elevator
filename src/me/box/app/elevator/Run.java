@@ -7,7 +7,6 @@ package me.box.app.elevator;
 import me.box.app.elevator.control.Assembler;
 import me.box.app.elevator.control.ElevatorManager;
 import me.box.app.elevator.enums.Direction;
-import me.box.app.elevator.model.Elevator;
 
 import java.util.Scanner;
 
@@ -19,8 +18,7 @@ import java.util.Scanner;
 public class Run {
 
     public static void main(String[] args) {
-        Elevator elevator = Assembler.assemble();
-        ElevatorManager manager = new ElevatorManager(elevator);
+        ElevatorManager manager = Assembler.assemble().getManager();
         manager.ride(-1, Direction.DOWN);
         manager.ride(2, Direction.DOWN);
         manager.ride(3, Direction.UP);

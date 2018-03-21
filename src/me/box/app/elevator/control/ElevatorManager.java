@@ -5,7 +5,6 @@
 package me.box.app.elevator.control;
 
 import me.box.app.elevator.enums.Direction;
-import me.box.app.elevator.model.Elevator;
 
 /**
  * Created by box on 2018/3/16.
@@ -17,7 +16,7 @@ public class ElevatorManager {
 
     private final Elevator mElevator;
 
-    public ElevatorManager(Elevator elevator) {
+    ElevatorManager(Elevator elevator) {
         this.mElevator = elevator;
     }
 
