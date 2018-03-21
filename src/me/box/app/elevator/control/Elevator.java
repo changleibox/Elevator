@@ -140,11 +140,7 @@ class Elevator {
 
     private boolean isInvalidIntentFloor(int index, Direction intentDirection) {
         OutsideFloor outsideFloor = floorsMap.get(index);
-        if (outsideFloor == null) {
-            Logger.warning(String.format("不能到达%d楼", index));
-            return true;
-        }
-        return !outsideFloor.containsDirection(intentDirection);
+        return outsideFloor == null || !outsideFloor.containsDirection(intentDirection);
     }
 
     private IntentFloor handleNewFloor(int index, Direction intentDirection) {
