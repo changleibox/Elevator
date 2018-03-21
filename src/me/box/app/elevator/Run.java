@@ -5,7 +5,7 @@
 package me.box.app.elevator;
 
 import me.box.app.elevator.control.Assembler;
-import me.box.app.elevator.control.Manager;
+import me.box.app.elevator.control.ElevatorManager;
 import me.box.app.elevator.enums.Direction;
 import me.box.app.elevator.model.Elevator;
 
@@ -20,7 +20,7 @@ public class Run {
 
     public static void main(String[] args) {
         Elevator elevator = Assembler.assemble();
-        Manager manager = new Manager(elevator);
+        ElevatorManager manager = new ElevatorManager(elevator);
         manager.ride(-1, Direction.DOWN);
         manager.ride(2, Direction.DOWN);
         manager.ride(3, Direction.UP);

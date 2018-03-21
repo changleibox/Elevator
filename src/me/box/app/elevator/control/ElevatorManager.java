@@ -13,11 +13,11 @@ import me.box.app.elevator.model.Elevator;
  * 电梯控制器
  */
 @SuppressWarnings("unused")
-public class Manager {
+public class ElevatorManager {
 
     private final Elevator mElevator;
 
-    public Manager(Elevator elevator) {
+    public ElevatorManager(Elevator elevator) {
         this.mElevator = elevator;
     }
 
