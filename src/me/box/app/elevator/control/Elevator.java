@@ -19,7 +19,7 @@ import static me.box.app.elevator.common.Constant.TIME_APPLICATION_DELAY;
  * <p>
  * 电梯
  */
-public class Elevator {
+class Elevator {
 
     private final Object mLock = new Object();
 
